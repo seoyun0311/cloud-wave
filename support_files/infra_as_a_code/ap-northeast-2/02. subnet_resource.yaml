@@ -1,0 +1,63 @@
+Parameters:
+  VpcCIDR:
+    Description: CIDR Block for VPC
+    Type: String
+    Default: 10.10.0.0/16
+  PublicSubnet01CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.10.0.0/24
+  PublicSubnet02CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.10.1.0/24
+
+  VpcId:
+    Description: ID for VPC
+    Type: String
+    Default: lab-edu-vpc-ap-02
+  PublicSubnet01Id:
+    Description: ID for PublicSubnet01
+    Type: String
+    Default: lab-edu-sub-2nd-pub-01
+  PublicSubnet02Id:
+    Description: ID for PublicSubnet02
+    Type: String
+    Default: lab-edu-sub-2nd-pub-02
+
+  AvailabilityZoneSubnet01:
+    Description: AvailabilityZone for every First subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZoneSubnet02:
+    Description: AvailabilityZone for every Second subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcId
+  PublicSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet01Id
+  PublicSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet02Id

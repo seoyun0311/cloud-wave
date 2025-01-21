@@ -1,0 +1,609 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Natwork Baseline for Education Environment. (Frankfurt Region VPC)
+Parameters:
+  VpcCIDR:
+    Description: CIDR Block for VPC
+    Type: String
+    Default: 10.30.0.0/16
+  PublicSubnet01CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.30.0.0/24
+  PublicSubnet02CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.30.1.0/24
+  PrivateSubnet01CIDR:
+    Description: CIDR Block for Privatesubnet01
+    Type: String
+    Default: 10.30.40.0/24
+  PrivateSubnet02CIDR:
+    Description: CIDR Block for Publicsubnet02
+    Type: String
+    Default: 10.30.41.0/24
+  DatabaseSubnet01CIDR:
+    Description: CIDR Block for DatabaseSubnet01
+    Type: String
+    Default: 10.30.80.0/24
+  DatabaseSubnet02CIDR:
+    Description: CIDR Block for DatabaseSubnet02
+    Type: String
+    Default: 10.30.81.0/24
+  TransitGWSubnet01CIDR:
+    Description: CIDR Block for TransitGWsubnet01
+    Type: String
+    Default: 10.30.255.224/28
+  TransitGWSubnet02CIDR:
+    Description: CIDR Block for TransitGWsubnet02
+    Type: String
+    Default: 10.30.255.240/28
+
+  VpcId:
+    Description: ID for VPC
+    Type: String
+    Default: lab-edu-vpc-eu
+  PublicSubnet01Id:
+    Description: ID for PublicSubnet01
+    Type: String
+    Default: lab-edu-sub-eu-pub-01
+  PublicSubnet02Id:
+    Description: ID for PublicSubnet02
+    Type: String
+    Default: lab-edu-sub-eu-pub-02
+  PrivateSubnet01Id:
+    Description: ID for PrivateSubnet01
+    Type: String
+    Default: lab-edu-sub-eu-pri-01
+  PrivateSubnet02Id:
+    Description: ID for PrivateSubnet02
+    Type: String
+    Default: lab-edu-sub-eu-pri-02
+  DatabaseSubnet01Id:
+    Description: ID for DatabaseSubnet01
+    Type: String
+    Default: lab-edu-sub-eu-db-01
+  DatabaseSubnet02Id:
+    Description: ID for DatabaseSubnet02
+    Type: String
+    Default: lab-edu-sub-eu-db-02
+  TransitGWSubnet01Id:
+    Description: ID for TransitGWSubnet01
+    Type: String
+    Default: lab-edu-sub-eu-tgw-01
+  TransitGWSubnet02Id:
+    Description: ID for TransitGWSubnet02
+    Type: String
+    Default: lab-edu-sub-eu-tgw-02
+
+  PublicRoutingTableId:
+    Description: ID for PublicRoutingTableId
+    Type: String
+    Default: lab-edu-rtb-eu-pub
+  PrivateRoutingTableId:
+    Description: ID for PrivateRoutingTable01Id
+    Type: String
+    Default: lab-edu-rtb-eu-pri
+  DatabaseRoutingTableId:
+    Description: ID for DatabaseRoutingTableId
+    Type: String
+    Default: lab-edu-rtb-eu-db
+  TransitGWRoutingTableId:
+    Description: ID for TransitGWRoutingTableId
+    Type: String
+    Default: lab-edu-rtb-eu-tgw
+
+  AvailabilityZoneSubnet01:
+    Description: AvailabilityZone for every First subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: eu-central-1a
+  AvailabilityZoneSubnet02:
+    Description: AvailabilityZone for every Second subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: eu-central-1c
+
+  # KeyName:
+  #   Description: Name of KeyPair
+  #   Type: AWS::EC2::KeyPair::KeyName
+  EC2OS:
+    Description: Operating System for EC2
+    Type: String
+    Default: ami-04f1b917806393faa  # 2024.06.28 version
+  EC2InstanceNameWeb:
+    Description: Name Tag for EC2
+    Type: String
+    Default: lab-edu-ec2-web-eu
+  EC2InstanceNameNetwork:
+    Description: Name Tag for EC2
+    Type: String
+    Default: lab-edu-ec2-network-eu
+  EC2InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t3.small
+  EC2InstanceRoleName:
+    Description: EC2 Instance Role Name
+    Type: String
+    Default: lab-edu-role-webserver-eu
+  EC2SecurityGroupWeb:
+    Description: Security Group Name for Web Server
+    Type: String
+    Default: lan-edu-sg-web-eu
+  EC2SecurityGroupNetwork:
+    Description: Security Group Name for Network Server
+    Type: String
+    Default: lan-edu-sg-network-eu    
+  VPCEndpointSecurityGroupName:
+    Description: ID for VPC Endpoint(interface type)
+    Type: String
+    Default: lab-edu-sg-endpoint-interface
+
+Metadata: 
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - 
+        Label: 
+          default: "Network Configuration"
+        Parameters: 
+          - VpcId
+          - VpcCIDR
+          - PublicSubnet01Id
+          - PublicSubnet01CIDR
+          - PublicSubnet02Id
+          - PublicSubnet02CIDR
+          - PrivateSubnet01Id
+          - PrivateSubnet01CIDR
+          - PrivateSubnet02Id
+          - PrivateSubnet02CIDR
+          - DatabaseSubnet01Id
+          - DatabaseSubnet01CIDR
+          - DatabaseSubnet02Id
+          - DatabaseSubnet02CIDR
+          - TransitGWSubnet01Id
+          - TransitGWSubnet01CIDR
+          - TransitGWSubnet02Id
+          - TransitGWSubnet02CIDR
+
+          - PublicRoutingTableId
+          - PrivateRoutingTableId
+          - DatabaseRoutingTableId
+          - TransitGWRoutingTableId
+
+      - 
+        Label: 
+          default: "Computing Resource Configuration"
+        Parameters: 
+          # - KeyName
+          - EC2OS
+          - EC2InstanceNameWeb
+          - EC2InstanceNameNetwork
+          - EC2InstanceType
+          - EC2InstanceRoleName
+          - EC2SecurityGroupWeb
+          - EC2SecurityGroupNetwork
+          - VPCEndpointSecurityGroupName
+          
+          - AvailabilityZoneSubnet01
+          - AvailabilityZoneSubnet02
+          
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcId
+  PublicSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet01Id
+  PublicSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet02Id
+  PrivateSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateSubnet01Id
+  PrivateSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateSubnet02Id
+  DatabaseSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref DatabaseSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      Tags:
+        - Key: Name
+          Value: !Ref DatabaseSubnet01Id
+  DatabaseSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref DatabaseSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      Tags:
+        - Key: Name
+          Value: !Ref DatabaseSubnet02Id
+  TransitGWSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref TransitGWSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      Tags:
+        - Key: Name
+          Value: !Ref TransitGWSubnet01Id
+  TransitGWSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref TransitGWSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      Tags:
+        - Key: Name
+          Value: !Ref TransitGWSubnet02Id
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: lab-edu-igw
+  AttachIgw:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref PublicRoutingTableId
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachIgw
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetAssociation01:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      SubnetId: !Ref PublicSubnet01
+  PublicSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      SubnetId: !Ref PublicSubnet02
+
+  PrivateRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateRoutingTableId
+  PrivateSubnetAssociation01:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRoutingTable
+      SubnetId: !Ref PrivateSubnet01
+  PrivateSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRoutingTable
+      SubnetId: !Ref PrivateSubnet02
+
+  DatabaseRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref DatabaseRoutingTableId
+  DatabaseSubnetAssociation01:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DatabaseRoutingTable
+      SubnetId: !Ref DatabaseSubnet01
+  DatabaseSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DatabaseRoutingTable
+      SubnetId: !Ref DatabaseSubnet02
+
+  TransitGWRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref TransitGWRoutingTableId
+  TransitGWSubnetAssociation01:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TransitGWRoutingTable
+      SubnetId: !Ref TransitGWSubnet01
+  TransitGWSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref TransitGWRoutingTable
+      SubnetId: !Ref TransitGWSubnet02
+
+  # VPC Endpoint for Security : S3 Gateway, sts interface Endpoint & Security Group
+  S3GatewayEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: 'Gateway'
+      VpcId: !Ref VPC
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:*'
+            Resource: '*'
+      RouteTableIds:
+        - !Ref PublicRoutingTable
+        - !Ref DatabaseRoutingTable
+        - !Ref PrivateRoutingTable
+  StsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.sts"
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet01
+        - !Ref PrivateSubnet02
+      SecurityGroupIds:
+        - !Ref EndpointSG
+  SSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet01
+        - !Ref PrivateSubnet02
+      SecurityGroupIds:
+        - !Ref EndpointSG
+  SSMMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet01
+        - !Ref PrivateSubnet02
+      SecurityGroupIds:
+        - !Ref EndpointSG
+  EC2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet01
+        - !Ref PrivateSubnet02
+      SecurityGroupIds:
+        - !Ref EndpointSG
+  EndpointSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Traffic into CloudFormation Endpoint"
+      SecurityGroupIngress:
+      -
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "10.30.0.0/16"
+      -
+          IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: "10.30.0.0/16"
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Name
+          Value: !Ref VPCEndpointSecurityGroupName
+
+
+  # Computing Resources : EC2(WEB-Streamlit), Security Group, Profile
+  SecurityGroupWeb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: allow 80 port
+      GroupName: !Ref EC2SecurityGroupWeb
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2OS
+      # KeyName: !Ref KeyName
+      InstanceType: !Ref EC2InstanceType
+      SubnetId: !Ref PublicSubnet01
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref SecurityGroupWeb
+      UserData:
+        Fn::Base64:
+          !Join [ "", [
+          "#!/bin/bash\n",
+          "sudo dnf install python3.11 -y\n",
+          "sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1\n",
+          "sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2\n",
+          "echo 2 | sudo update-alternatives --config python3\n",
+          "python3 -m ensurepip --default-pip\n",
+          "sudo ln -fs /usr/bin/python3.11 /usr/bin/python\n",
+          "sudo sed -i 's|#!/usr/bin/python3|#!/usr/bin/python3.9|g' /usr/bin/dnf\n",
+          "python3 -m pip install --upgrade pip\n",
+          "pip install streamlit\n",
+          "pip install boto3\n",
+          "pip install psutil\n",
+          "dnf install stress\n",
+          "dnf install git -y\n",
+          "mkdir streamlit-project\n",
+          "cd streamlit-project\n",
+          "git init\n",
+          "git config core.sparseCheckout true\n",
+          "git remote add -f origin https://github.com/CJ-CloudWave-Public-Hands-on-Lab/streamlit-project.git\n",
+          "echo \"scripts/\" >> .git/info/sparse-checkout\n",
+          "echo \"support_files/\" >> .git/info/sparse-checkout\n",
+          "git pull origin main\n",
+          "cd support_files/python_test_code\n",
+          "streamlit run ec2_main_home.py --server.port 80\n"] ]
+      Tags:
+        - Key: Name
+          Value: !Ref EC2InstanceNameWeb
+  SecurityGroupNetwork:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow all traffic from 10.0.0.0/8
+      GroupName: !Ref EC2SecurityGroupNetwork
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.0.0.0/8
+      VpcId: !Ref VPC
+  NetworkServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2OS
+      # KeyName: !Ref KeyName
+      InstanceType: !Ref EC2InstanceType
+      SubnetId: !Ref PrivateSubnet01
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref SecurityGroupNetwork
+      Tags:
+        - Key: Name
+          Value: !Ref EC2InstanceNameNetwork
+  
+  
+  EC2InstanceProfile: 
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Roles: 
+        - !Ref EC2InstanceRole
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      RoleName: !Ref EC2InstanceRoleName
+
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Description: VPC Resource Id
+    Export:
+      Name: !Sub "${AWS::StackName}-VPC"
+
+  PublicSubnet01:
+    Value: !Ref PublicSubnet01
+    Description: First Public Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet01"
+  PublicSubnet02:
+    Value: !Ref PublicSubnet02
+    Description: Second Public Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet02"
+  PrivateSubnet01:
+    Value: !Ref PrivateSubnet01
+    Description: First Private Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet01"
+  PrivateSubnet02:
+    Value: !Ref PrivateSubnet02
+    Description: Second Private Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet02"
+  DatabaseSubnet01:
+    Value: !Ref DatabaseSubnet01
+    Description: First Database Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-DatabaseSubnet01"
+  DatabaseSubnet02:
+    Value: !Ref DatabaseSubnet02
+    Description: Second Database Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-DatabaseSubnet02"
+  TransitGWSubnet01:
+    Value: !Ref TransitGWSubnet01
+    Description: First Transit Gateway Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-TransitGWSubnet01"
+  TransitGWSubnet02:
+    Value: !Ref TransitGWSubnet02
+    Description: Second Transit Gateway Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-TransitGWSubnet02"
+      
+  EC2InstanceWebPublicIp:
+    Value: !GetAtt WebServer.PublicIp
+    Description: The Public IP address of the Web EC2 instance
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceWebPublicIp"
+  EC2InstanceNetworkPrivateIp:
+    Value: !GetAtt NetworkServer.PrivateIp
+    Description: The Private IP address of the Network EC2 instance
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceNetworkPrivateIp"

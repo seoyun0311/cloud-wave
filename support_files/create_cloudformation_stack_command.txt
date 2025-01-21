@@ -1,0 +1,18 @@
+# cicd cloudformatin stack
+cd ~/environment/streamlit-project/infra_as_a_code/
+
+aws cloudformation create-stack --stack-name cicd \
+--template-body file://cicd_repo_and_deploy.yaml \
+--capabilities CAPABILITY_NAMED_IAM
+
+
+# ap-northeast-2 network baseline 02 cloudformation stack
+cd ~/environment/streamlit-project/infra_as_a_code/
+
+aws cloudformation create-stack \
+--stack-name network-baseline-ap-02 \
+--template-body file://network-baseline-seoul.yaml \
+--capabilities CAPABILITY_NAMED_IAM \
+--parameters \
+ParameterKey=AvailabilityZoneSubnet01,ParameterValue=ap-northeast-2a \
+ParameterKey=AvailabilityZoneSubnet02,ParameterValue=ap-northeast-2c

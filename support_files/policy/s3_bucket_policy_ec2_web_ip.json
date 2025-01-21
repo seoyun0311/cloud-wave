@@ -1,0 +1,19 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": [
+                "{BUCKET_ARN}",
+                "{BUCKET_ARN}/*"
+            ],
+            "Condition": {
+                "IpAddress": {
+                    "aws:SourceIp": "{NAT_GATEWAY_PUBLIC_IP}"
+                }
+            }
+        }
+    ]
+}

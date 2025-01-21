@@ -1,0 +1,201 @@
+Parameters:
+  VpcCIDR:
+    Description: CIDR Block for VPC
+    Type: String
+    Default: 10.10.0.0/16
+  PublicSubnet01CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.10.0.0/24
+  PublicSubnet02CIDR:
+    Description: CIDR Block for Publicsubnet01
+    Type: String
+    Default: 10.10.1.0/24
+  PrivateSubnet01CIDR:
+    Description: CIDR Block for Privatesubnet01
+    Type: String
+    Default: 10.10.40.0/24
+  PrivateSubnet02CIDR:
+    Description: CIDR Block for Publicsubnet02
+    Type: String
+    Default: 10.10.41.0/24
+
+  VpcId:
+    Description: ID for VPC
+    Type: String
+    Default: lab-edu-vpc-ap-02
+  PublicSubnet01Id:
+    Description: ID for PublicSubnet01
+    Type: String
+    Default: lab-edu-sub-2nd-pub-01
+  PublicSubnet02Id:
+    Description: ID for PublicSubnet02
+    Type: String
+    Default: lab-edu-sub-2nd-pub-02
+  PrivateSubnet01Id:
+    Description: ID for PrivateSubnet01
+    Type: String
+    Default: lab-edu-sub-2nd-pri-01
+  PrivateSubnet02Id:
+    Description: ID for PrivateSubnet02
+    Type: String
+    Default: lab-edu-sub-2nd-pri-02
+
+  PublicRoutingTableId:
+    Description: ID for PublicRoutingTableId
+    Type: String
+    Default: lab-edu-rtb-2nd-pub
+  PrivateRoutingTable01Id:
+    Description: ID for PrivateRoutingTable01Id
+    Type: String
+    Default: lab-edu-rtb-2nd-pri
+  PrivateRoutingTable02Id:
+    Description: ID for PrivateRoutingTable02Id
+    Type: String
+    Default: lab-edu-rtb-2nd-pri
+
+  AvailabilityZoneSubnet01:
+    Description: AvailabilityZone for every First subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZoneSubnet02:
+    Description: AvailabilityZone for every Second subnet
+    Type: AWS::EC2::AvailabilityZone::Name
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcId
+  PublicSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet01Id
+  PublicSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref PublicSubnet02Id
+  PrivateSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet01CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet01
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateSubnet01Id
+  PrivateSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet02CIDR
+      AvailabilityZone: !Ref AvailabilityZoneSubnet02
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateSubnet02Id
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: lab-edu-igw
+  AttachIgw:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicRoutingTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref PublicRoutingTableId
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachIgw
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetAssociation01:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      SubnetId: !Ref PublicSubnet01
+  PublicSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRoutingTable
+      SubnetId: !Ref PublicSubnet02
+
+  PrivateRoutingTable01:  #
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateRoutingTable01Id
+  PrivateSubnetAssociation01: # 2nd
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRoutingTable01 #
+      SubnetId: !Ref PrivateSubnet01 #
+
+  PrivateRoutingTable02:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref PrivateRoutingTable02Id
+  PrivateSubnetAssociation02:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRoutingTable02
+      SubnetId: !Ref PrivateSubnet02
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Description: VPC Resource Id
+    Export:
+      Name: !Sub "${AWS::StackName}-VPC"
+
+  PublicSubnet01:
+    Value: !Ref PublicSubnet01
+    Description: First Public Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet01"
+  PublicSubnet02:
+    Value: !Ref PublicSubnet02
+    Description: Second Public Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet02"
+  PrivateSubnet01:
+    Value: !Ref PrivateSubnet01
+    Description: First Private Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet01"
+  PrivateSubnet02:
+    Value: !Ref PrivateSubnet02
+    Description: Second Private Subnet Resource Id 
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet02"

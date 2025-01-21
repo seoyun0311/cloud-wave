@@ -1,0 +1,19 @@
+{
+    "Comment": "CREATE NS record",
+    "Changes": [
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "st01.samsung-wave.com.",
+                "Type": "NS",
+                "TTL": 300,
+                "ResourceRecords": [
+                    {"Value": "ns-1.awsdns-00.com."},
+                    {"Value": "ns-2.awsdns-00.net."},
+                    {"Value": "ns-3.awsdns-00.org."},
+                    {"Value": "ns-4.awsdns-00.co.uk."}
+                ]
+            }
+        }
+    ]
+}

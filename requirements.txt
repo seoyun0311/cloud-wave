@@ -1,0 +1,13 @@
+streamlit==1.28.1
+streamlit-cookies-manager==0.2.0
+streamlit-login-auth-ui==0.2.0
+streamlit-lottie==0.0.5
+streamlit-option-menu==0.3.6
+redis==5.0.1
+psycopg2-binary
+Flask==3.0.0
+Flask-Login==0.6.3
+Flask-Session==0.5.0
+boto3==1.28.67
+botocore==1.31.67
+psutil==5.9.6
